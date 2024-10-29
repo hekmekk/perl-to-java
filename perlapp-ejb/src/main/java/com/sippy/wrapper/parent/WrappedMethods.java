@@ -2,7 +2,6 @@ package com.sippy.wrapper.parent;
 
 import com.sippy.wrapper.parent.database.DatabaseConnection;
 import com.sippy.wrapper.parent.database.dao.TnbDao;
-import com.sippy.wrapper.parent.request.GetTnbListRequest;
 import com.sippy.wrapper.parent.request.JavaTestRequest;
 import com.sippy.wrapper.parent.response.JavaTestResponse;
 import java.util.*;
@@ -40,6 +39,8 @@ public class WrappedMethods {
     return jsonResponse;
   }
 
+  record GetTnbListRequest(String number) {}
+
   record RpcResponseTnb(String tnb, String name, boolean isTnb) {}
 
   @RpcMethod(name = "getTnbList", description = "perl to java translation")
@@ -50,8 +51,8 @@ public class WrappedMethods {
     var tnbsFromDb = databaseConnection.getAllTnbs();
 
     String tnb = null;
-    if (req.getNumber() != null) {
-      tnb = databaseConnection.getOneTnb(req.getNumber());
+    if (req.number() != null) {
+      tnb = databaseConnection.getOneTnb(req.number());
     }
 
     var tnbs = new ArrayList<RpcResponseTnb>();
