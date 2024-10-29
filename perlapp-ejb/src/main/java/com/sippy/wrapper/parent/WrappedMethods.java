@@ -1,6 +1,8 @@
 package com.sippy.wrapper.parent;
 
 import com.sippy.wrapper.parent.database.DatabaseConnection;
+import com.sippy.wrapper.parent.database.dao.TnbDao;
+import com.sippy.wrapper.parent.request.GetTnbListRequest;
 import com.sippy.wrapper.parent.request.JavaTestRequest;
 import com.sippy.wrapper.parent.response.JavaTestResponse;
 import java.util.*;
@@ -34,6 +36,42 @@ public class WrappedMethods {
     jsonResponse.put("faultCode", "200");
     jsonResponse.put("faultString", "Method success");
     jsonResponse.put("something", response);
+
+    return jsonResponse;
+  }
+
+  record RpcResponseTnb(String tnb, String name, boolean isTnb) {}
+
+  @RpcMethod(name = "getTnbList", description = "perl to java translation")
+  public Map<String, Object> getTnbList(final GetTnbListRequest req) {
+
+    LOGGER.info("Fetching TNB list from the database");
+
+    var tnbsFromDb = databaseConnection.getAllTnbs();
+
+    String tnb = null;
+    if (req.getNumber() != null) {
+      tnb = databaseConnection.getOneTnb(req.getNumber());
+    }
+
+    var tnbs = new ArrayList<RpcResponseTnb>();
+    tnbs.add(new RpcResponseTnb("D001", "Deutsche Telekom", "D001".equals(tnb)));
+    for (TnbDao tnb_from_db : tnbsFromDb) {
+      if (List.of("D146", "D218", "D248").contains(tnb_from_db.getTnb())) {
+        continue;
+      }
+
+      tnbs.add(
+          new RpcResponseTnb(
+              tnb_from_db.getTnb(), tnb_from_db.getName(), tnb_from_db.getTnb().equals(tnb)));
+    }
+
+    tnbs.sort(Comparator.comparing(tnbObj -> tnbObj.name().toLowerCase()));
+
+    Map<String, Object> jsonResponse = new HashMap<>();
+    jsonResponse.put("faultCode", "200");
+    jsonResponse.put("faultString", "Method success");
+    jsonResponse.put("tnbs", tnbs);
 
     return jsonResponse;
   }

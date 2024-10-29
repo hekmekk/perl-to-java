@@ -2,6 +2,7 @@ package com.sippy.wrapper.parent.database;
 
 import com.sippy.wrapper.parent.database.dao.TnbDao;
 import java.util.List;
+import java.util.Optional;
 import javax.ejb.Stateless;
 import javax.persistence.*;
 import org.slf4j.Logger;
@@ -24,5 +25,11 @@ public class DatabaseConnection {
   public List<TnbDao> getAllTnbs() {
     Query query = entityManager.createNativeQuery("SELECT * FROM tnbs", TnbDao.class);
     return query.getResultList();
+  }
+
+  public String getOneTnb(final String tnb) {
+    Query query = entityManager.createNativeQuery("SELECT * FROM tnbs WHERE tnb = ?", TnbDao.class);
+    query.setParameter(1, tnb);
+    return ((List<TnbDao>) query.getResultList()).stream().findFirst().map(TnbDao::getTnb).orElse(null);
   }
 }
