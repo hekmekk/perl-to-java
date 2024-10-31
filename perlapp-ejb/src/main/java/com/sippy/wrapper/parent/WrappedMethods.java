@@ -63,13 +63,10 @@ public class WrappedMethods {
 
     String tnb = null;
     if (req.number() != null) {
-      final var oneTnbQuery =
-          entityManager.createNativeQuery("SELECT * FROM tnbs WHERE tnb = ?", TnbDao.class);
+      final var oneTnbQuery = entityManager.createNativeQuery("SELECT tnb FROM tnbs WHERE tnb = ?");
       oneTnbQuery.setParameter(1, req.number());
 
-      tnb =
-          ((List<TnbDao>) oneTnbQuery.getResultList())
-              .stream().findFirst().map(TnbDao::getTnb).orElse(null);
+      tnb = ((List<String>) oneTnbQuery.getResultList()).stream().findFirst().orElse(null);
     }
 
     var tnbs = new ArrayList<Tnb>();
