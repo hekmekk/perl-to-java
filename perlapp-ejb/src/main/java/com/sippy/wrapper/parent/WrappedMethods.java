@@ -10,6 +10,8 @@ import java.util.List;
 import java.util.Map;
 import javax.ejb.EJB;
 import javax.ejb.Stateless;
+import javax.persistence.EntityManager;
+import javax.persistence.PersistenceContext;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -19,6 +21,9 @@ public class WrappedMethods {
   private static final Logger LOGGER = LoggerFactory.getLogger(WrappedMethods.class);
 
   @EJB DatabaseConnection databaseConnection;
+
+  @PersistenceContext(unitName = "CustomDB")
+  private EntityManager entityManager;
 
   @RpcMethod(name = "javaTest", description = "Check if everything works :)")
   public Map<String, Object> javaTest(JavaTestRequest request) {
@@ -53,11 +58,18 @@ public class WrappedMethods {
 
     LOGGER.info("Fetching TNB list from the database");
 
-    var tnbsFromDb = databaseConnection.getAllTnbs();
+    final List<TnbDao> tnbsFromDb =
+        entityManager.createNativeQuery("SELECT * FROM tnbs", TnbDao.class).getResultList();
 
     String tnb = null;
     if (req.number() != null) {
-      tnb = databaseConnection.getOneTnb(req.number());
+      final var oneTnbQuery =
+          entityManager.createNativeQuery("SELECT * FROM tnbs WHERE tnb = ?", TnbDao.class);
+      oneTnbQuery.setParameter(1, req.number());
+
+      tnb =
+          ((List<TnbDao>) oneTnbQuery.getResultList())
+              .stream().findFirst().map(TnbDao::getTnb).orElse(null);
     }
 
     var tnbs = new ArrayList<Tnb>();
