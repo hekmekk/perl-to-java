@@ -5,7 +5,6 @@ import com.sippy.wrapper.parent.database.dao.TnbDao;
 import com.sippy.wrapper.parent.request.JavaTestRequest;
 import com.sippy.wrapper.parent.response.JavaTestResponse;
 import java.util.ArrayList;
-import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -72,7 +71,7 @@ public class WrappedMethods {
           new Tnb(tnb_from_db.getTnb(), tnb_from_db.getName(), tnb_from_db.getTnb().equals(tnb)));
     }
 
-    tnbs.sort(Comparator.comparing(tnbObj -> tnbObj.name().toLowerCase()));
+    tnbs.sort((a, b) -> a.name().toLowerCase().compareTo(b.name().toLowerCase()));
 
     return new GetTnbListResponse("200", "Method success", tnbs);
   }
