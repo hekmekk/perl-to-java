@@ -4,7 +4,11 @@ import com.sippy.wrapper.parent.database.DatabaseConnection;
 import com.sippy.wrapper.parent.database.dao.TnbDao;
 import com.sippy.wrapper.parent.request.JavaTestRequest;
 import com.sippy.wrapper.parent.response.JavaTestResponse;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Comparator;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 import javax.ejb.EJB;
 import javax.ejb.Stateless;
 import org.slf4j.Logger;
@@ -39,12 +43,14 @@ public class WrappedMethods {
     return jsonResponse;
   }
 
-  record GetTnbListRequest(String number) {}
+  private record GetTnbListRequest(String number) {}
 
-  record RpcResponseTnb(String tnb, String name, boolean isTnb) {}
+  private record GetTnbListResponse(String faultCode, String faultString, List<Tnb> tnbs) {}
+
+  private record Tnb(String tnb, String name, boolean isTnb) {}
 
   @RpcMethod(name = "getTnbList", description = "perl to java translation")
-  public Map<String, Object> getTnbList(final GetTnbListRequest req) {
+  public GetTnbListResponse getTnbList(final GetTnbListRequest req) {
 
     LOGGER.info("Fetching TNB list from the database");
 
@@ -55,25 +61,19 @@ public class WrappedMethods {
       tnb = databaseConnection.getOneTnb(req.number());
     }
 
-    var tnbs = new ArrayList<RpcResponseTnb>();
-    tnbs.add(new RpcResponseTnb("D001", "Deutsche Telekom", "D001".equals(tnb)));
+    var tnbs = new ArrayList<Tnb>();
+    tnbs.add(new Tnb("D001", "Deutsche Telekom", "D001".equals(tnb)));
     for (TnbDao tnb_from_db : tnbsFromDb) {
       if (List.of("D146", "D218", "D248").contains(tnb_from_db.getTnb())) {
         continue;
       }
 
       tnbs.add(
-          new RpcResponseTnb(
-              tnb_from_db.getTnb(), tnb_from_db.getName(), tnb_from_db.getTnb().equals(tnb)));
+          new Tnb(tnb_from_db.getTnb(), tnb_from_db.getName(), tnb_from_db.getTnb().equals(tnb)));
     }
 
     tnbs.sort(Comparator.comparing(tnbObj -> tnbObj.name().toLowerCase()));
 
-    Map<String, Object> jsonResponse = new HashMap<>();
-    jsonResponse.put("faultCode", "200");
-    jsonResponse.put("faultString", "Method success");
-    jsonResponse.put("tnbs", tnbs);
-
-    return jsonResponse;
+    return new GetTnbListResponse("200", "Method success", tnbs);
   }
 }
